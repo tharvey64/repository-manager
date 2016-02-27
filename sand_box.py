@@ -6,9 +6,9 @@ import subprocess
 
 def clone_and_create_branch(repo):
     command = 'cd ../repositories && git clone {clone_url}'.format(clone_url=repo.clone_url)
-    subprocess.call(command.split())
+    subprocess.getoutput(command)
     command = 'git -C {path} checkout -b test-update'.format(path='../repositories/'+repo.name)
-    subprocess.call(command.split())
+    subprocess.getoutput(command)
 
 def main():
     collector = repo_manager.Collector(repo_manager.github)
