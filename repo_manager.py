@@ -19,31 +19,50 @@ _ORG = 'ByteAcademyCo'
 
 github = GithubAPI(config.get('access_token'))
 
-def test_organizations_list_repos(github, page=1):
-    path = 'orgs/{org}/repos'.format(org=_ORG)
-    return github.get(path,params={'type':'all','per_page':'100','page':page})
+def filter_repositories(repositories, *args):
+    '''
+    args will be filters
+    they must be callable
+    '''
+    cleaned_repos = []
+    for repo in repositories:
+        if all(filter_(repo) for filter_ in args):
+            cleaned_repos.append(repo)
+    return cleaned_repos
+
+def name_startswith_filter(string):
+    def name_filter(item):
+        return item.get('name','').startswith(string)
+    return name_filter
 
 def collect_all_repos(github):
-    # path = 'orgs/{org}/repos'.format(org=_ORG)
-    response = test_organizations_list_repos(github)
+    response = get_repos(github)
     repos = response.json()
     links = get_links(response.headers.get('Link'))
     while links.get('last',False):
-        # print(response.content)
-        print(response.headers)
-        response = test_organizations_list_repos(github, page=links['next'])
+        response = get_repos(github, page=links['next'])
         links = get_links(response.headers.get('Link'))
         repos+=response.json()
         print(len(repos))
+    return repos
+
+def get_repos(github, page=1):
+    path = 'orgs/{org}/repos'.format(org=_ORG)
+    return github.get(path,params={'type':'all','per_page':'100','page':page})
+
 def get_links(link_header_str):
-    link_header = (parse_link(link_str) for link_str in link_header_str.split(','))
-    # print(len(link_header))
+    link_header = parse_link_header(link_header_str)
     link_info = {link_info['rel']: link_info['page'] for link_info in link_header}
     return link_info
 
-def parse_link(link):
-    url, relation = link.split(';')
-    return  {'page': get_page(url),'rel':relation.split('=')[1].strip('"')}
+def parse_link_header(link_header):
+    links = (link_str.split(';') for link_str in link_header.split(','))
+    return  ({
+        'page': get_page(url),
+        'rel':relation.split('=')[1].strip('"')}
+        for url,relation in links
+    )
 
 def get_page(url):
     return re.search(r'(?<=page=)(?<!per_page=)\d*',url).group()
+
