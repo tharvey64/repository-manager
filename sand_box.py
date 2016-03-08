@@ -1,7 +1,6 @@
 import repo_manager
 import repo_filters
 
-import subprocess
 
 
 # make pull repuest that pulls test-update into master
@@ -10,10 +9,21 @@ import subprocess
 # create new release at this SHA
 # FORK TO BYTE EXERCISES
 
-def main():
+def add_commit_edits(git, repos, branch, message):
+    for r in repos:
+        git.git_switch_branch(r, branch)
+        git.git_add(r)
+        git.git_commit(r, message)
+
+def push_edits(git, repos, branch):
+    raise "Are you sure?"
+    for r in repos:
+        git.git_push(r, branch)
+        
+def main(fiter_string):
     collector = repo_manager.Collector(repo_manager.github)
     collector.run()
-    matchers = dict(name_startswith=repo_filters.name_startswith_filter('exercise'))
+    matchers = dict(name_startswith=repo_filters.name_startswith_filter(fiter_string))
     filter_set = repo_manager.FilterSet(**matchers)
     
     repositories = []
@@ -24,7 +34,6 @@ def main():
 
 
 if __name__ == "__main__":
-    repos = main()
-    git = repo_manager.githubEXT
-    # for r in repos:
-        # githubEXT
+    repos = main('exercise-python')
+    git = repo_manager.GitLocal()
+    git_update = repo_manager.githubEXT
