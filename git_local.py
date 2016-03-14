@@ -1,4 +1,4 @@
-import subprocessz
+import subprocess
 
 class GitLocal:
     @staticmethod
