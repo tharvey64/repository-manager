@@ -11,16 +11,22 @@ import repo_filters
 # create new release at this SHA
 # FORK TO BYTE EXERCISES
 
-def add_commit_edits(git, repos, branch, message):
-    for r in repos:
-        git.git_switch_branch(r, branch)
-        git.git_add(r)
-        git.git_commit(r, message)
 
-def push_edits(git, repos, branch):
+def clone_checkout(git, repos, path_to_repo, branch_name):
+    for r in repos:
+        git.git_clone(r, path_to_repo)
+        git.git_create_branch(r, branch_name, path_to_repo)
+
+def add_commit_edits(git, repos, path_to_repo, branch, message):
+    for r in repos:
+        git.git_switch_branch(r, branch, path_to_repo)
+        git.git_add(r, path_to_repo)
+        git.git_commit(r, message, path_to_repo)
+
+def push_edits(git, repos, path_to_repo, branch):
     raise "Are you sure?"
     for r in repos:
-        git.git_push(r, branch)
+        git.git_push(r, branch, path_to_repo)
 
 def build_repo_set_that_starts_with(fiter_string, org):
     collector = repo_manager.Collector(repo_manager.github, org)
@@ -68,14 +74,14 @@ def create_new_releases(magic, repos, release_type, message_body):
                 print(repo._info)
                 print("*"*80)
 
-def fork_latest_release_to_be(magic, byte_exercise_repos, byte_academy_repos):
+def fork_latest_release_to_be(magic, byte_exercise_repos, byte_academy_repos, message):
     """
     for each repo
         get the latest release 
         make a pull request 
     """
     head_org = "ByteAcademyCo"
-    message = 'Adding tests and error messages'
+    # message = 'Patches.'
 
     releases = {repo.name:magic.git_api_get_latest_release(repo) for repo in byte_academy_repos}
     if len(releases) != len(byte_exercise_repos):
@@ -89,12 +95,11 @@ def fork_latest_release_to_be(magic, byte_exercise_repos, byte_academy_repos):
                 print("="*80)
                 print(repo.name)
                 print("-"*30, text, "*"*80, sep='\n')
-                print(text)
-                print("*"*80)
         else:
             print("="*80)
             print(repo.name)
             print("MISSING RELEASE","-"*30, "*"*80, sep='\n')
+
 
 # def backup_ba(git, path_to_backup):
 #     raise "I do not think you meant to do this."
@@ -113,6 +118,13 @@ def fork_latest_release_to_be(magic, byte_exercise_repos, byte_academy_repos):
 
 if __name__ == "__main__":
     be_repos = build_repo_set_that_starts_with('exercise-python', 'ByteExercises')
-    ba_repos = build_repo_set_that_starts_with('exercise-python', 'ByteAcademyCo')
+    # ba_repos = build_repo_set_that_starts_with('exercise-python', 'ByteAcademyCo')
     # git = repo_manager.GitLocal()
-    git_update = repo_manager.githubEXT
+    # clone_checkout(git, ba_repos, '../repositories/', 'patch-tests')
+    # add_commit_edits(git, ba_repos, '../repositories/', 'patch-tests', 'Fixing bugs and errors in tests.')
+    # push_edits(git, ba_repos, '../repositories/', 'patch-tests')
+    # git_update = repo_manager.githubEXT
+    # args = ['patch-tests','ByteAcademyCo', 'master', 'ByteAcademyCo', 'Patching bugs.']
+    # make_pull_requests(git_update, ba_repos, *args)
+    # merge_pull_request(git_update, ba_repos, 'Merging patches.')
+    # create_new_releases(git_update, ba_repos, 'minor', 'Test patches and other edits.')
