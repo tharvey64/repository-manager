@@ -24,11 +24,11 @@ def add_commit_edits(git, repos, path_to_repo, branch, message):
         git.git_commit(r, message, path_to_repo)
 
 def push_edits(git, repos, path_to_repo, branch):
-    raise "Are you sure?"
+    # raise "Are you sure?"
     for r in repos:
         git.git_push(r, branch, path_to_repo)
 
-def build_repo_set_that_starts_with(fiter_string, org):
+def build_repo_set_that_starts_with(org, fiter_string):
     collector = repo_manager.Collector(repo_manager.github, org)
     collector.run()
     starts_with_filter = repo_filters.name_startswith_filter(fiter_string)
@@ -38,6 +38,15 @@ def build_repo_set_that_starts_with(fiter_string, org):
 
     return [Repository(**repo) for repo in collector.repositories if filter_set.clean(repo)]
 
+def build_repo_set_from_repos(org, *args):
+    collector = repo_manager.Collector(repo_manager.github, org)
+    collector.run()
+    name_in_filter = repo_filters.name_in(*args)
+    matchers = dict(name_in=name_in_filter)
+    filter_set = repo_manager.FilterSet(**matchers)
+    Repository = repo_manager.Repository
+
+    return [Repository(**repo) for repo in collector.repositories if filter_set.clean(repo)]
 # NEW
 # some of these should use the merge api
 def make_pull_requests(magic, repos, *args):
@@ -84,8 +93,8 @@ def fork_latest_release_to_be(magic, byte_exercise_repos, byte_academy_repos, me
     # message = 'Patches.'
 
     releases = {repo.name:magic.git_api_get_latest_release(repo) for repo in byte_academy_repos}
-    if len(releases) != len(byte_exercise_repos):
-        raise "Out Of Sync"
+    # if len(releases) != len(byte_exercise_repos):
+    #     raise "Out Of Sync"
 
     for repo in byte_exercise_repos:
         branch = releases.get(repo.name)
@@ -115,16 +124,74 @@ def fork_latest_release_to_be(magic, byte_exercise_repos, byte_academy_repos, me
 #             print(count)
 #     print("Cloned: ", count, "repositories.")
 
+# def update_these_repos(*repo_names):
+    
+#     git_update = repo_manager.githubEXT
+#     ba_repos = build_repo_set_that_starts_with('ByteAcademyCo', repo_names)
+#     # for repo in ba_repos:
+#     #     git_update.git_api_get_master_sha(repo)
+
+#     be_repos = build_repo_set_that_starts_with('ByteExercises',repo_names)
+#     # data = ['fix','ByteAcademyCo', 'master', 'ByteAcademyCo', 'Patches']
+#     # make_pull_requests(git_update, ba_repos, *data)
+    # merge_pull_request(git_update, ba_repos, 'Merging patches.')
+    # create_new_releases(git_update, ba_repos, 'patch', 'Moved tests to subTest manager.')
+    # fork_latest_release_to_be(git_update, be_repos, ba_repos, 'Syncing with upstream...')
+
+def update_repos(branch_name, message, release_type="patch"):
+    """
+    Use this to pull edits from the `branch_name` into ByteAcademyCo
+    and then have those forked to ByteExercises after creating the releases.
+    Works well if the branch only exists on the repos you want to edit.
+    """
+    git_update = repo_manager.githubEXT
+    ba_repos = build_repo_set_that_starts_with('ByteAcademyCo','exercise-')
+    be_repos = build_repo_set_that_starts_with('ByteExercises','exercise-')
+    data = [branch_name,'ByteAcademyCo', 'master', 'ByteAcademyCo', message]
+    make_pull_requests(git_update, ba_repos, *data)
+    merge_pull_request(git_update, ba_repos, message)
+    create_new_releases(git_update, ba_repos, release_type, message)
+    fork_latest_release_to_be(git_update, be_repos, ba_repos, 'Syncing with upstream...')
+
+# def main():
+#     repo_names = [
+#         'exercise-python-variables-datatypes','exercise-python-datastructures',
+#         'exercise-python-operators-booleans-functions','exercise-python-loops-conditionals',
+#         'exercise-python-temp-convert', 'exercise-python-is-palindrome', 
+#         'exercise-python-reverse-polish-notation','exercise-python-get-started-with',
+#         'exercise-python-learn-about-byte-resource', 'exercise-python-make-some-variables',
+#         'exercise-python-fizzbuzz','exercise-python-triangles','exercise-python-fibonacci',
+#         'exercise-python-factorial', 'exercise-python-string-scramble', 
+#         'exercise-python-largest-prime-factor', 'exercise-python-sieve-of-erathosthenes',
+#         'exercise-python-make-a-list', 'exercise-python-make-a-dictionary','exercise-python-print-a-list',
+#         'exercise-python-make-a-variable', 'exercise-python-make-a-boolean', 'exercise-python-make-a-function'
+#     ]
+#     return update_these_repos(*repo_names)
 
 if __name__ == "__main__":
-    be_repos = build_repo_set_that_starts_with('exercise-python', 'ByteExercises')
-    # ba_repos = build_repo_set_that_starts_with('exercise-python', 'ByteAcademyCo')
+    # main()
+    # update_repos('jeff-feedback', 'Feedback adjustments.')
+    # ba_repos = build_repo_set_that_starts_with('ByteAcademyCo','exercise-')
+    # be_repos = build_repo_set_that_starts_with('ByteExercises','exercise-')
+    # print(len(ba_repos))
+    # print(len(be_repos))
+    
     # git = repo_manager.GitLocal()
-    # clone_checkout(git, ba_repos, '../repositories/', 'patch-tests')
-    # add_commit_edits(git, ba_repos, '../repositories/', 'patch-tests', 'Fixing bugs and errors in tests.')
-    # push_edits(git, ba_repos, '../repositories/', 'patch-tests')
+    # STEP ONE: CLONE
+    # clone_checkout(git, ba_repos, '../repositories/', 'js-build-tests-patch')
+
+    # STEP TWO: Add Commit
+    # add_commit_edits(git, ba_repos, '../repositories/', 'edit-tests-patch', 'Moving assert statements to subTest.')
+    # push_edits(git, ba_repos, '../repositories/', 'edit-tests-patch')
     # git_update = repo_manager.githubEXT
-    # args = ['patch-tests','ByteAcademyCo', 'master', 'ByteAcademyCo', 'Patching bugs.']
+    
+    # STEP THREE: MAKE PULL REQUEST
+    # args = ['edit-tests-patch','ByteAcademyCo', 'master', 'ByteAcademyCo', 'Moved tests to subTest.']
     # make_pull_requests(git_update, ba_repos, *args)
+    # input()
     # merge_pull_request(git_update, ba_repos, 'Merging patches.')
-    # create_new_releases(git_update, ba_repos, 'minor', 'Test patches and other edits.')
+
+    # STEP FOUR: CREATE RELEASE AND FORK
+    # print(ba_repos)
+    # create_new_releases(git_update, ba_repos, 'patch', 'Moved tests to subTest manager.')
+    # fork_latest_release_to_be(git_update, be_repos, ba_repos, 'Syncing with upstream...')

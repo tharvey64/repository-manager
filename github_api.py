@@ -200,6 +200,20 @@ class GithubAPIExtension(GithubAPI):
         repo._info['_api_response_log']['create_release'] = response.text
         return response.text
 
+    def git_api_get_master_sha(self, repo):
+        path = 'repos/{owner}/{repo}/git/refs/{ref}'.format(
+            owner=repo.owner.get('login'),
+            repo=repo.name,
+            ref='heads/master'
+        )
+        response = self.get(path)
+        repo._info['_api_response_log']['get_master_sha'] = response.text
+        if str(response.status_code)[0] == "2": 
+            data = response.json().get('object')
+        else:
+            data = {}
+        repo._info['master_sha'] = data.get('sha')
+        return data.get('sha')
 
     def git_api_get_latest_release(self, repo):
         """
@@ -245,7 +259,7 @@ class GithubAPIExtension(GithubAPI):
         else:
             return {'message': 'Invalid `release_type`'}
 
-        new_tag_name = '.'.join(str(num) for num in cleaned_tag)
+        new_tag_name = 'v' + '.'.join(str(num) for num in cleaned_tag)
         return {'tag_name': new_tag_name}
 
 
