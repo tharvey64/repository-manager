@@ -57,7 +57,7 @@ class GithubAPIExtension(GithubAPI):
     def __init__(self, access_token):
         super().__init__(access_token)
 
-    def git_api_pull_request(self, repo, head_branch, head_org, base_branch, base_org, message=''):
+    def git_api_pull_request(self, repo, head_branch, head_org, base_branch, base_org, title, message=''):
         '''
         edits are pulled from HEAD into BASE
         '''
