@@ -172,32 +172,32 @@ def update_repos(branch_name, title, message, release_type="patch"):
 if __name__ == "__main__":
     # main()
     # update_repos('collapse', 'Creating collapsible sections in README.md.', 'minor')
-    # ba_repos = build_repo_set_that_starts_with('ByteAcademyCo','exercise-python')
-    ba_repos = build_repo_set_from_repos('ByteAcademyCo', *['exercise-python-make-a-function','exercise-python-fizzbuzz'])
-    be_repos = build_repo_set_from_repos('ByteExercises', *['exercise-python-make-a-function','exercise-python-fizzbuzz'])
-    # be_repos = build_repo_set_that_starts_with('ByteExercises','exercise-')
+    ba_repos = build_repo_set_that_starts_with('ByteAcademyCo','exercise-javascript')
+    # ba_repos = build_repo_set_from_repos('ByteAcademyCo', *['exercise-python-make-a-function','exercise-python-fizzbuzz'])
+    # be_repos = build_repo_set_from_repos('ByteExercises', *['exercise-python-make-a-function','exercise-python-fizzbuzz'])
+    # be_repos = build_repo_set_that_starts_with('ByteExercises','exercise-javascript')
     print(len(ba_repos))
-    print(len(be_repos))
-    # git = repo_manager.GitLocal()
+    # print(len(be_repos))
+    git = repo_manager.GitLocal()
     # STEP ONE: CLONE
-    # clone_checkout(git, ba_repos, '../repositories/', 'edit-python-tests-patch')
+    clone_checkout(git, ba_repos, '../repositories/', 'javascript-tests')
 
     # STEP TWO: Add Commit
     # add_commit_edits(git, ba_repos, '../repositories/', 'edit-python-tests-patch', 'Bug fixes.')
     # push_edits(git, ba_repos, '../repositories/', 'edit-python-tests-patch')
     
-    git_update = repo_manager.githubEXT
+    # git_update = repo_manager.githubEXT
     
-    # STEP THREE: MAKE PULL REQUEST
-    args = ['edit-python-tests-patch', 'ByteAcademyCo', 'master', 'ByteAcademyCo','Bug fixes.', 'Fixed variable names and leading newline characters.']
-    make_pull_requests(git_update, ba_repos, *args)
-    input("Merge Pull Requests")
-    merge_pull_request(git_update, ba_repos, 'Merging patches.')
-    print(ba_repos)
-    input("Create New Releases")
-    # STEP FOUR: CREATE RELEASE AND FORK
-    create_new_releases(git_update, ba_repos, 'patch', 'Bug fixes.')
-    input("Fork Latest Release To Byte Exercise")
-    fork_latest_release_to_be(git_update, be_repos, ba_repos, 'Syncing with upstream...')
-    input("Merge Pull Request In Byte Exercise")
-    merge_pull_request(git_update, be_repos, 'Syncing with upstream...')
+    # # STEP THREE: MAKE PULL REQUEST
+    # args = ['edit-python-tests-patch', 'ByteAcademyCo', 'master', 'ByteAcademyCo','Bug fixes.', 'Fixed variable names and leading newline characters.']
+    # make_pull_requests(git_update, ba_repos, *args)
+    # input("Merge Pull Requests")
+    # merge_pull_request(git_update, ba_repos, 'Merging patches.')
+    # print(ba_repos)
+    # input("Create New Releases")
+    # # STEP FOUR: CREATE RELEASE AND FORK
+    # create_new_releases(git_update, ba_repos, 'patch', 'Bug fixes.')
+    # input("Fork Latest Release To Byte Exercise")
+    # fork_latest_release_to_be(git_update, be_repos, ba_repos, 'Syncing with upstream...')
+    # input("Merge Pull Request In Byte Exercise")
+    # merge_pull_request(git_update, be_repos, 'Syncing with upstream...')
