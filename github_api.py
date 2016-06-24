@@ -57,19 +57,36 @@ class GithubAPIExtension(GithubAPI):
     def __init__(self, access_token):
         super().__init__(access_token)
 
-    def git_api_pull_request(self, repo, head_branch, head_org, base_branch, base_org, title, message=''):
+    def git_api_pull_request(self, repo, head_branch, head_org, base_branch, base_org, title, body=''):
         '''
         edits are pulled from HEAD into BASE
         '''
+        # path ="repos/{organization}/{repo}/commits/{ref}"
+        # response = self.get(path.format(
+        #         organization=head_org,
+        #         # Bad pulling name from BE repo for BA ref
+        #         repo=repo.name,
+        #         ref=head_branch
+        #     ),
+        #     headers=dict(Accept='application/vnd.github.v3.sha')
+        # )
+        # if str(response.status_code)[0] == "2": 
+        #     data = {'sha': response.text}
+        # else:
+        #     data = {}
+
+        # # data.get('')
+        # input(data)
+
         if base_org is None:
             base_org = head_org
+        # head_branch = data.get('sha')
         path = 'repos/{owner}/{repo}/pulls'
         data = json.dumps({
-            'title':'Adding Tests.',
-            'head':'{organization}:{branch}'.format(organization=head_org,branch=head_branch),
-            # 'base':'{organization}:{branch}'.format(organization=base_org,branch=base_branch),
+            'title': title,
+            'head':'{organization}:{branch}'.format(organization=head_org,branch='master'),
             'base':'{branch}'.format(branch=base_branch),
-            'body': message
+            'body': body
         })
         response = self.post(
             path.format(
@@ -176,7 +193,7 @@ class GithubAPIExtension(GithubAPI):
           "prerelease": false
         }
         """
-        previous_release = self.git_api_get_latest_release(repo)
+        previous_release = self.git_api_get_latest_release(repo).get('tag_name')
         new_release = self.create_release_tag(previous_release, release_type)
         if 'message' in new_release:
             new_release['tag_name'] = previous_release
@@ -235,7 +252,7 @@ class GithubAPIExtension(GithubAPI):
             data = response.json()
         else:
             data = {}
-        return data.get('tag_name')
+        return data
 
     @staticmethod
     def create_release_tag(tag_name, release_type):
