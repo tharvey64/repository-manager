@@ -26,6 +26,7 @@ def add_commit_edits(git, repos, path_to_repo, branch, message):
 def push_edits(git, repos, path_to_repo, branch):
     # raise "Are you sure?"
     for r in repos:
+        git.git_switch_branch(r, branch, path_to_repo)
         git.git_push(r, branch, path_to_repo)
 
 def build_repo_set_that_starts_with(org, fiter_string):
@@ -92,14 +93,16 @@ def fork_latest_release_to_be(magic, byte_exercise_repos, byte_academy_repos, me
     head_org = "ByteAcademyCo"
     # message = 'Patches.'
 
-    releases = {repo.name:magic.git_api_get_latest_release(repo) for repo in byte_academy_repos}
+    releases = {repo.name: (repo.owner.get('login'), magic.git_api_get_latest_release(repo)) for repo in byte_academy_repos}
     # if len(releases) != len(byte_exercise_repos):
     #     raise "Out Of Sync"
 
     for repo in byte_exercise_repos:
-        branch = releases.get(repo.name)
+        org, branch = releases.get(repo.name)
+        import pprint as p
+        p.pprint(branch)
         if branch:
-            text = magic.git_api_pull_request(repo, branch, head_org, repo.default_branch, repo.owner.get('login'), message)
+            text = magic.git_api_pull_request(repo, branch.get('tag_name'), org, repo.default_branch, repo.owner.get('login'), message)
             if not repo._info.get('pull_request_number'):
                 print("="*80)
                 print(repo.name)
@@ -172,32 +175,68 @@ def update_repos(branch_name, title, message, release_type="patch"):
 if __name__ == "__main__":
     # main()
     # update_repos('collapse', 'Creating collapsible sections in README.md.', 'minor')
-    ba_repos = build_repo_set_that_starts_with('ByteAcademyCo','exercise-javascript')
+    ba_repos = build_repo_set_that_starts_with('ByteAcademyCo','exercise-python')
+    be_repos = build_repo_set_that_starts_with('ByteExercises','exercise-python')
     # ba_repos = build_repo_set_from_repos('ByteAcademyCo', *['exercise-python-make-a-function','exercise-python-fizzbuzz'])
     # be_repos = build_repo_set_from_repos('ByteExercises', *['exercise-python-make-a-function','exercise-python-fizzbuzz'])
     # be_repos = build_repo_set_that_starts_with('ByteExercises','exercise-javascript')
     print(len(ba_repos))
-    # print(len(be_repos))
-    git = repo_manager.GitLocal()
+    print(len(be_repos))
+
+
+    # LOCAL EDITS ONLY
+    # git = repo_manager.GitLocal()
     # STEP ONE: CLONE
-    clone_checkout(git, ba_repos, '../repositories/', 'javascript-tests')
+    # clone_checkout(git, ba_repos, '../repositories/', 'feedback-edits')
 
     # STEP TWO: Add Commit
-    # add_commit_edits(git, ba_repos, '../repositories/', 'edit-python-tests-patch', 'Bug fixes.')
-    # push_edits(git, ba_repos, '../repositories/', 'edit-python-tests-patch')
+    # add_commit_edits(git, ba_repos, '../repositories/', 'javascript-tests', 'Edits to lesson code snippets. Adding tests for all javascript exercises that require tests.')
+    # push_edits(git, ba_repos, '../repositories/', 'javascript-tests')
     
-    # git_update = repo_manager.githubEXT
+    # GITHUB ACTIONS START HERE
+    git_update = repo_manager.githubEXT
     
-    # # STEP THREE: MAKE PULL REQUEST
-    # args = ['edit-python-tests-patch', 'ByteAcademyCo', 'master', 'ByteAcademyCo','Bug fixes.', 'Fixed variable names and leading newline characters.']
+    # # # # STEP THREE: MAKE PULL REQUEST
+    # print("MAKE PULL REQUESTS")
+    # # head_branch, head_org, base_branch, base_org, title, message = args
+    # head_branch = input('Enter head branch for PR:\t').strip()
+    # head_org = input('Enter head branch Organization:\t').strip()
+    # base_branch = input('Enter base branch for PR:\t').strip()
+    # base_org = input('Enter base branch Organization:\t').strip()
+    # title = input('Enter the title that will appear on the PR:\t').strip()
+    # message = input('Enter the message that will appear on the PR:\t').strip()
+    # # args = ['javascript-tests', 'ByteAcademyCo', 'master', 'ByteAcademyCo','Adding JavaScript tests.', 'Created initial set of JavaScript tests.']
+    # args = [head_branch, head_org, base_branch, base_org, title, message]
+    # input("Press Enter to make PRs(Press Enter)")
     # make_pull_requests(git_update, ba_repos, *args)
-    # input("Merge Pull Requests")
-    # merge_pull_request(git_update, ba_repos, 'Merging patches.')
-    # print(ba_repos)
-    # input("Create New Releases")
-    # # STEP FOUR: CREATE RELEASE AND FORK
-    # create_new_releases(git_update, ba_repos, 'patch', 'Bug fixes.')
-    # input("Fork Latest Release To Byte Exercise")
-    # fork_latest_release_to_be(git_update, be_repos, ba_repos, 'Syncing with upstream...')
-    # input("Merge Pull Request In Byte Exercise")
-    # merge_pull_request(git_update, be_repos, 'Syncing with upstream...')
+    # print("Merge Pull Requests")
+    # print("Enter message that will appear for the closeing of the PR")
+    # commit_message = input("Message for merging PRs: (Extra detail to append to automatic commit message.)\n").strip()
+    # merge_pull_request(git_update, ba_repos, commit_message)
+    # pprint.pprint(ba_repos)
+    # print("*"*100)
+    # print("*"*100,"BE")
+    # pprint.pprint(be_repos)
+    # input("Create New Releases(Press Enter)")
+    # # # STEP FOUR: CREATE RELEASE AND FORK
+    # release_type = input("Please enter release type(major/minor/patch):\t").strip()
+    # release_body = input("Enter tag body (`string` Text describing the contents of the tag):\n").strip()
+    # create_new_releases(git_update, ba_repos, release_type, release_body)
+    # pprint.pprint(ba_repos)
+    # print("*"*100)
+    # print("*"*100,"BE")
+    # pprint.pprint(ba_repos)
+
+    input("Fork Latest Release To Byte Exercise(Press Enter)")
+    input("Head must be a branch.")
+    fork_latest_release_to_be(git_update, be_repos, ba_repos, 'Syncing with upstream...')
+
+
+    input("Merge Pull Request In Byte Exercise(Press Enter)")
+
+
+    merge_pull_request(git_update, be_repos, 'Syncing with upstream...')
+
+
+
+
