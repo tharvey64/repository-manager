@@ -102,7 +102,9 @@ def fork_latest_release_to_be(magic, byte_exercise_repos, byte_academy_repos, me
         import pprint as p
         p.pprint(branch)
         if branch:
-            text = magic.git_api_pull_request(repo, branch.get('tag_name'), org, repo.default_branch, repo.owner.get('login'), message)
+            # text = magic.git_api_pull_request(repo, branch.get('tag_name'), org, repo.default_branch, repo.owner.get('login'), message)
+            text = magic.git_api_pull_request(repo, 'master', org, repo.default_branch, repo.owner.get('login'), message)
+
             if not repo._info.get('pull_request_number'):
                 print("="*80)
                 print(repo.name)
@@ -196,39 +198,58 @@ if __name__ == "__main__":
     # GITHUB ACTIONS START HERE
     git_update = repo_manager.githubEXT
     
-    # # # # STEP THREE: MAKE PULL REQUEST
-    # print("MAKE PULL REQUESTS")
+    # # # STEP THREE: MAKE PULL REQUEST
+    print("MAKE PULL REQUESTS")
     # # head_branch, head_org, base_branch, base_org, title, message = args
-    # head_branch = input('Enter head branch for PR:\t').strip()
-    # head_org = input('Enter head branch Organization:\t').strip()
-    # base_branch = input('Enter base branch for PR:\t').strip()
-    # base_org = input('Enter base branch Organization:\t').strip()
-    # title = input('Enter the title that will appear on the PR:\t').strip()
-    # message = input('Enter the message that will appear on the PR:\t').strip()
-    # # args = ['javascript-tests', 'ByteAcademyCo', 'master', 'ByteAcademyCo','Adding JavaScript tests.', 'Created initial set of JavaScript tests.']
-    # args = [head_branch, head_org, base_branch, base_org, title, message]
-    # input("Press Enter to make PRs(Press Enter)")
-    # make_pull_requests(git_update, ba_repos, *args)
-    # print("Merge Pull Requests")
-    # print("Enter message that will appear for the closeing of the PR")
-    # commit_message = input("Message for merging PRs: (Extra detail to append to automatic commit message.)\n").strip()
-    # merge_pull_request(git_update, ba_repos, commit_message)
-    # pprint.pprint(ba_repos)
-    # print("*"*100)
-    # print("*"*100,"BE")
-    # pprint.pprint(be_repos)
-    # input("Create New Releases(Press Enter)")
+    
+    ready = False
+    while not ready:
+        head_branch = input('Enter head branch for PR:\t').strip()
+        head_org = input('Enter head branch Organization:\t').strip()
+        base_branch = input('Enter base branch for PR:\t').strip()
+        base_org = input('Enter base branch Organization:\t').strip()
+        title = input('Enter the title that will appear on the PR:\t').strip()
+        message = input('Enter the message that will appear on the PR:\t').strip()
+        print('head_branch = '+head_branch, 'head_org = '+head_org, 'base_branch = '+base_branch, 'base_org = '+base_org, 'title = '+title, 'message = '+message, sep="\n")
+        ready = input("Press Enter to make PRs.(Type anything to restart)") == ''
+    # args = ['javascript-tests', 'ByteAcademyCo', 'master', 'ByteAcademyCo','Adding JavaScript tests.', 'Created initial set of JavaScript tests.']
+    args = [head_branch, head_org, base_branch, base_org, title, message]
+    
+    make_pull_requests(git_update, ba_repos, *args)
+
+    print("Merge Pull Requests")
+    print("Enter message that will appear for the closeing of the PR")
+    
+    ready = False
+    while not ready:
+        commit_message = input("Message for merging PRs: (Extra detail to append to automatic commit message.)\n").strip()
+        ready = input("Press Enter to merge PRs.(Type anything to change message)") == ''
+    
+    merge_pull_request(git_update, ba_repos, commit_message)
+    
+    # ??
+    pprint.pprint(ba_repos)
+    print("*"*100)
+    print("*"*100,"BE")
+    pprint.pprint(be_repos)
+    input("Create New Releases(Press Enter)")
     # # # STEP FOUR: CREATE RELEASE AND FORK
-    # release_type = input("Please enter release type(major/minor/patch):\t").strip()
-    # release_body = input("Enter tag body (`string` Text describing the contents of the tag):\n").strip()
-    # create_new_releases(git_update, ba_repos, release_type, release_body)
-    # pprint.pprint(ba_repos)
-    # print("*"*100)
-    # print("*"*100,"BE")
-    # pprint.pprint(ba_repos)
+    
+    ready = False
+    while not ready:
+        release_type = input("Please enter release type(major/minor/patch):\t").strip()
+        release_body = input("Enter tag body (`string` Text describing the contents of the tag):\n").strip()
+        ready = input("Press Enter to create new releases.(Type anything to change release type and body)") == ''
+    
+    create_new_releases(git_update, ba_repos, release_type, release_body)
+    
+    pprint.pprint(ba_repos)
+    print("*"*100)
+    print("*"*100,"BE")
+    pprint.pprint(ba_repos)
 
     input("Fork Latest Release To Byte Exercise(Press Enter)")
-    input("Head must be a branch.")
+    input("Head must be a branch.(Set to master)")
     fork_latest_release_to_be(git_update, be_repos, ba_repos, 'Syncing with upstream...')
 
 
