@@ -228,7 +228,7 @@ if __name__ == "__main__":
     # pprint.pprint(ba_repos)
 
     input("Fork Latest Release To Byte Exercise(Press Enter)")
-
+    input("Head must be a branch.")
     fork_latest_release_to_be(git_update, be_repos, ba_repos, 'Syncing with upstream...')
 
 

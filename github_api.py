@@ -61,30 +61,12 @@ class GithubAPIExtension(GithubAPI):
         '''
         edits are pulled from HEAD into BASE
         '''
-        # path ="repos/{organization}/{repo}/commits/{ref}"
-        # response = self.get(path.format(
-        #         organization=head_org,
-        #         # Bad pulling name from BE repo for BA ref
-        #         repo=repo.name,
-        #         ref=head_branch
-        #     ),
-        #     headers=dict(Accept='application/vnd.github.v3.sha')
-        # )
-        # if str(response.status_code)[0] == "2": 
-        #     data = {'sha': response.text}
-        # else:
-        #     data = {}
-
-        # # data.get('')
-        # input(data)
-
         if base_org is None:
             base_org = head_org
-        # head_branch = data.get('sha')
         path = 'repos/{owner}/{repo}/pulls'
         data = json.dumps({
             'title': title,
-            'head':'{organization}:{branch}'.format(organization=head_org,branch='master'),
+            'head':'{organization}:{branch}'.format(organization=head_org,branch=head_branch),
             'base':'{branch}'.format(branch=base_branch),
             'body': body
         })
