@@ -5,12 +5,14 @@ import repo_filters
 
 
 
-# make pull repuest that pulls test-update into master
-# close pull request
-# get the SHA from closing that pull request
-# create new release at this SHA
-# FORK TO BYTE EXERCISES
 
+######################################################
+######################################################
+# These Functions Utilize The Git To Clone Repos, 
+# Add Changed/Created Files, Commit Changes, 
+# And Push Changes To Remote
+######################################################
+######################################################
 
 def clone_checkout(git, repos, path_to_repo, branch_name):
     for r in repos:
@@ -29,27 +31,20 @@ def push_edits(git, repos, path_to_repo, branch):
         git.git_switch_branch(r, branch, path_to_repo)
         git.git_push(r, branch, path_to_repo)
 
-def build_repo_set_that_starts_with(org, fiter_string):
-    collector = repo_manager.Collector(repo_manager.github, org)
-    collector.run()
-    starts_with_filter = repo_filters.name_startswith_filter(fiter_string)
-    matchers = dict(name_startswith=starts_with_filter)
-    filter_set = repo_manager.FilterSet(**matchers)
-    Repository = repo_manager.Repository
 
-    return [Repository(**repo) for repo in collector.repositories if filter_set.clean(repo)]
+######################################################
+######################################################
+# These Functions Utilize The Github API To Make/Close 
+# Pull Requests On Github And Create Realeases
+######################################################
+######################################################
 
-def build_repo_set_from_repos(org, *args):
-    collector = repo_manager.Collector(repo_manager.github, org)
-    collector.run()
-    name_in_filter = repo_filters.name_in(*args)
-    matchers = dict(name_in=name_in_filter)
-    filter_set = repo_manager.FilterSet(**matchers)
-    Repository = repo_manager.Repository
+# make pull repuest that pulls test-update into master
+# close pull request
+# get the SHA from closing that pull request
+# create new release at this SHA
+# FORK TO BYTE EXERCISES
 
-    return [Repository(**repo) for repo in collector.repositories if filter_set.clean(repo)]
-# NEW
-# some of these should use the merge api
 def make_pull_requests(magic, repos, *args):
     head_branch, head_org, base_branch, base_org, title, message = args
     for repo in repos:
@@ -84,6 +79,8 @@ def create_new_releases(magic, repos, release_type, message_body):
                 print(repo._info)
                 print("*"*80)
 
+# Also Add Ability to Perform initial Forking
+# Change Name To Fork Latest Branch
 def fork_latest_release_to_be(magic, byte_exercise_repos, byte_academy_repos, message):
     """
     for each repo
@@ -103,7 +100,13 @@ def fork_latest_release_to_be(magic, byte_exercise_repos, byte_academy_repos, me
         p.pprint(branch)
         if branch:
             # text = magic.git_api_pull_request(repo, branch.get('tag_name'), org, repo.default_branch, repo.owner.get('login'), message)
-            text = magic.git_api_pull_request(repo, 'master', org, repo.default_branch, repo.owner.get('login'), message)
+            raise "Will the below work if repos have different names???"
+            text = magic.git_api_pull_request(
+                repo=repo, 
+                head_branch='master', head_org=org, 
+                base_branch=repo.default_branch, base_org=repo.owner.get('login'), 
+                title=message, body=''
+            )
 
             if not repo._info.get('pull_request_number'):
                 print("="*80)
@@ -113,6 +116,43 @@ def fork_latest_release_to_be(magic, byte_exercise_repos, byte_academy_repos, me
             print("="*80)
             print(repo.name)
             print("MISSING RELEASE","-"*30, "*"*80, sep='\n')
+
+
+######################################################
+######################################################
+# These Functions Create Sets Of Repos That 
+# Match Specific Filters
+######################################################
+######################################################
+
+def build_repo_set_that_starts_with(org, fiter_string):
+    collector = repo_manager.Collector(repo_manager.github, org)
+    collector.run()
+    starts_with_filter = repo_filters.name_startswith_filter(fiter_string)
+    matchers = dict(name_startswith=starts_with_filter)
+    filter_set = repo_manager.FilterSet(**matchers)
+    Repository = repo_manager.Repository
+
+    return [Repository(**repo) for repo in collector.repositories if filter_set.clean(repo)]
+
+def build_repo_set_from_repos(org, *args):
+    collector = repo_manager.Collector(repo_manager.github, org)
+    collector.run()
+    name_in_filter = repo_filters.name_in(*args)
+    matchers = dict(name_in=name_in_filter)
+    filter_set = repo_manager.FilterSet(**matchers)
+    Repository = repo_manager.Repository
+
+    return [Repository(**repo) for repo in collector.repositories if filter_set.clean(repo)]
+
+
+######################################################
+######################################################
+# First Function Clones All Repos On BA
+# Second Function Performs Update On Specific List of Repos
+# Third Function Should Be Reevaluated 
+######################################################
+######################################################
 
 
 # def backup_ba(git, path_to_backup):
@@ -175,10 +215,16 @@ def update_repos(branch_name, title, message, release_type="patch"):
 #     return update_these_repos(*repo_names)
 
 if __name__ == "__main__":
+    raise """This Code Must Be Adjusted To Handle Changing BA repo names.
+Such that when a BA repo name chnages the corresponding BE fork may still be matched to it.
+Get BA.forks Or BE.parent to match BA repos with unsynced BE repos. Do not update the BE repo name.
+"""
     # main()
     # update_repos('collapse', 'Creating collapsible sections in README.md.', 'minor')
-    ba_repos = build_repo_set_that_starts_with('ByteAcademyCo','exercise-python')
-    be_repos = build_repo_set_that_starts_with('ByteExercises','exercise-python')
+    # ba_repos = build_repo_set_that_starts_with('ByteAcademyCo','exercise-python')
+    # be_repos = build_repo_set_that_starts_with('ByteExercises','exercise-python')
+    ba_repos = build_repo_set_that_starts_with('ByteAcademyCo','exercise-javascript')
+    be_repos = build_repo_set_that_starts_with('ByteExercises','exercise-javascript')
     # ba_repos = build_repo_set_from_repos('ByteAcademyCo', *['exercise-python-make-a-function','exercise-python-fizzbuzz'])
     # be_repos = build_repo_set_from_repos('ByteExercises', *['exercise-python-make-a-function','exercise-python-fizzbuzz'])
     # be_repos = build_repo_set_that_starts_with('ByteExercises','exercise-javascript')
