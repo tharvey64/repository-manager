@@ -79,43 +79,6 @@ def create_new_releases(magic, repos, release_type, message_body):
                 print(repo._info)
                 print("*"*80)
 
-# Also Add Ability to Perform initial Forking
-# Change Name To Fork Latest Branch
-def fork_latest_release_to_be(magic, byte_exercise_repos, byte_academy_repos, message):
-    """
-    for each repo
-        get the latest release 
-        make a pull request 
-    """
-    # Refactor To Use Repo Mapping
-    head_org = "ByteAcademyCo"
-
-    releases = {repo.name: (repo.owner.get('login'), magic.git_api_get_latest_release(repo)) for repo in byte_academy_repos}
-
-    for repo in byte_exercise_repos:
-        org, branch = releases.get(repo.name)
-        import pprint as p
-        p.pprint(branch)
-        if branch:
-            # text = magic.git_api_pull_request(repo, branch.get('tag_name'), org, repo.default_branch, repo.owner.get('login'), message)
-            raise "Will the below work if repos have different names???"
-            text = magic.git_api_pull_request(
-                repo=repo, 
-                head_branch='master', head_org=org, 
-                base_branch=repo.default_branch, base_org=repo.owner.get('login'), 
-                title=message, body=''
-            )
-
-            if not repo._info.get('pull_request_number'):
-                print("="*80)
-                print(repo.name)
-                print("-"*30, text, "*"*80, sep='\n')
-        else:
-            print("="*80)
-            print(repo.name)
-            print("MISSING RELEASE","-"*30, "*"*80, sep='\n')
-
-
 # NOT DONE YET
 
 def fork_exercises_to_be(magic, repo_map, fork_to_org, title, body=''):
@@ -129,7 +92,6 @@ def fork_exercises_to_be(magic, repo_map, fork_to_org, title, body=''):
 
     # releases = {repo.name: (repo.owner.get('login'), magic.git_api_get_latest_release(repo)) for repo in byte_academy_repos}
 
-    import pprint as p
     for repo_name, repos in repo_map.items():
         parent = repos.get('parent')
         fork = repos.get('fork')
@@ -143,15 +105,14 @@ def fork_exercises_to_be(magic, repo_map, fork_to_org, title, body=''):
 
             if not repo._info.get('pull_request_number'):
                 print("="*80)
-                print(repo.name)
+                print("FAILED",repo.name)
                 print("-"*30, text, "*"*80, sep='\n')
         else:
             # fork parent to ByteExercises
             text = magic.git_api_create_fork(parent, fork_to_org)
             print("%--___--%"*80)
-            print(repo_name)
+            print("NEW FORK", repo_name)
             print("-"*30, text, "*"*80, sep='\n')
-
 
 ######################################################
 ######################################################
@@ -332,9 +293,9 @@ if __name__ == "__main__":
     input("Fork Latest Release To Byte Exercise(Press Enter)")
     input("Head must be a branch.(Set to master)")
     # Use Mapping Here
-    fork_latest_release_to_be(git_update, be_repos, ba_repos, 'Syncing with upstream...')
+    # fork_latest_release_to_be(git_update, be_repos, ba_repos, 'Syncing with upstream...')
     # **New**
-    # fork_exercises_to_be(git_update, repo_name_mapping, "ByteExercises", "Syncing with upstream...", body='')
+    fork_exercises_to_be(git_update, repo_name_mapping, "ByteExercises", title="Syncing with upstream...", body='')
 
     input("Merge Pull Request In Byte Exercise(Press Enter)")
 
