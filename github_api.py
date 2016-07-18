@@ -154,6 +154,30 @@ class GithubAPIExtension(GithubAPI):
         repo._info['master_sha'] = data.get('sha')
         return response.text
 
+    def git_api_create_fork(self, repo, organization):
+        """
+        https://developer.github.com/v3/repos/forks/#create-a-fork
+        POST /repos/:owner/:repo/forks
+        @param organization `string` Optional parameter to specify the organization name if forking into an organization.
+        """
+        path = "repos/{owner}/{repo}/forks"
+        data = json.dumps({
+            'organization': organization
+        })
+        response = self.post(
+            path.format(
+                owner=repo.owner.get('login'),
+                repo=repo.name
+            ),
+            data=data
+        )
+        repo._info['_api_response_log']['create_fork'] = response.text
+        if str(response.status_code)[0] == "2":
+            data = response.json()
+        else:
+            data = {}
+        return response.text
+
     def git_api_create_release(self, repo, release_type, message_body=''):
         """
         Create Release
@@ -213,6 +237,24 @@ class GithubAPIExtension(GithubAPI):
             data = {}
         repo._info['master_sha'] = data.get('sha')
         return data.get('sha')
+
+
+    def git_api_get_repository(self, repo):
+        """
+        https://developer.github.com/v3/repos/#get
+        GET /repos/{owner}/{repo}
+        """
+        path = "repos/{owner}/{repo}".format(
+            owner=repo.owner.get('login'),
+            repo=repo.name
+        )
+        response = self.get(path)
+        repo._info['_api_response_log']['get_repository'] = response.text
+        if str(response.status_code)[0] == "2": 
+            data = response.json()
+        else:
+            data = {}
+        return data
 
     def git_api_get_latest_release(self, repo):
         """

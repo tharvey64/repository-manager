@@ -1,7 +1,4 @@
-import re
-import json
-import sys
-import subprocess
+import re, json, sys
 from github_api import GithubAPI, GithubAPIExtension
 from git_local import GitLocal
 try:
@@ -30,6 +27,14 @@ class Repository:
         for key, value in kwargs.items():
             setattr(self, key, value)
         self._info = {'_api_response_log': {} }
+
+    def __str__(self):
+        return self.full_name
+
+    def __repr__(self):
+        return '<{file_name}.Repository: {repo_name}>'.format(
+            file_name=__name__, repo_name=self
+        )
 
 class FilterSet:
     def __init__(self, **kwargs):
