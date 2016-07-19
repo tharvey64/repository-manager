@@ -5,12 +5,14 @@ import repo_filters
 
 
 
-# make pull repuest that pulls test-update into master
-# close pull request
-# get the SHA from closing that pull request
-# create new release at this SHA
-# FORK TO BYTE EXERCISES
 
+######################################################
+######################################################
+# These Functions Utilize The Git To Clone Repos, 
+# Add Changed/Created Files, Commit Changes, 
+# And Push Changes To Remote
+######################################################
+######################################################
 
 def clone_checkout(git, repos, path_to_repo, branch_name):
     for r in repos:
@@ -29,27 +31,20 @@ def push_edits(git, repos, path_to_repo, branch):
         git.git_switch_branch(r, branch, path_to_repo)
         git.git_push(r, branch, path_to_repo)
 
-def build_repo_set_that_starts_with(org, fiter_string):
-    collector = repo_manager.Collector(repo_manager.github, org)
-    collector.run()
-    starts_with_filter = repo_filters.name_startswith_filter(fiter_string)
-    matchers = dict(name_startswith=starts_with_filter)
-    filter_set = repo_manager.FilterSet(**matchers)
-    Repository = repo_manager.Repository
 
-    return [Repository(**repo) for repo in collector.repositories if filter_set.clean(repo)]
+######################################################
+######################################################
+# These Functions Utilize The Github API To Make/Close 
+# Pull Requests On Github And Create Realeases
+######################################################
+######################################################
 
-def build_repo_set_from_repos(org, *args):
-    collector = repo_manager.Collector(repo_manager.github, org)
-    collector.run()
-    name_in_filter = repo_filters.name_in(*args)
-    matchers = dict(name_in=name_in_filter)
-    filter_set = repo_manager.FilterSet(**matchers)
-    Repository = repo_manager.Repository
+# make pull repuest that pulls test-update into master
+# close pull request
+# get the SHA from closing that pull request
+# create new release at this SHA
+# FORK TO BYTE EXERCISES
 
-    return [Repository(**repo) for repo in collector.repositories if filter_set.clean(repo)]
-# NEW
-# some of these should use the merge api
 def make_pull_requests(magic, repos, *args):
     head_branch, head_org, base_branch, base_org, title, message = args
     for repo in repos:
@@ -84,35 +79,83 @@ def create_new_releases(magic, repos, release_type, message_body):
                 print(repo._info)
                 print("*"*80)
 
-def fork_latest_release_to_be(magic, byte_exercise_repos, byte_academy_repos, message):
+# NOT DONE YET
+
+def fork_exercises_to_be(magic, repo_map, fork_to_org, title, body=''):
     """
     for each repo
         get the latest release 
         make a pull request 
     """
-    head_org = "ByteAcademyCo"
-    # message = 'Patches.'
+    # # Refactor To Use Repo Mapping
+    # head_org = "ByteAcademyCo"
 
-    releases = {repo.name: (repo.owner.get('login'), magic.git_api_get_latest_release(repo)) for repo in byte_academy_repos}
-    # if len(releases) != len(byte_exercise_repos):
-    #     raise "Out Of Sync"
+    # releases = {repo.name: (repo.owner.get('login'), magic.git_api_get_latest_release(repo)) for repo in byte_academy_repos}
 
-    for repo in byte_exercise_repos:
-        org, branch = releases.get(repo.name)
-        import pprint as p
-        p.pprint(branch)
-        if branch:
-            # text = magic.git_api_pull_request(repo, branch.get('tag_name'), org, repo.default_branch, repo.owner.get('login'), message)
-            text = magic.git_api_pull_request(repo, 'master', org, repo.default_branch, repo.owner.get('login'), message)
+    for repo_name, repos in repo_map.items():
+        parent = repos.get('parent')
+        fork = repos.get('fork')
+        if fork:
+            text = magic.git_api_pull_request(
+                repo=repo, 
+                head_branch=parent.default_branch, head_org=parent.owner.get('login'), 
+                base_branch=fork.default_branch, base_org=fork.owner.get('login'), 
+                title=title, body=body
+            )
 
             if not repo._info.get('pull_request_number'):
                 print("="*80)
-                print(repo.name)
+                print("FAILED",repo.name)
                 print("-"*30, text, "*"*80, sep='\n')
         else:
-            print("="*80)
-            print(repo.name)
-            print("MISSING RELEASE","-"*30, "*"*80, sep='\n')
+            # fork parent to ByteExercises
+            text = magic.git_api_create_fork(parent, fork_to_org)
+            print("%--___--%"*80)
+            print("NEW FORK", repo_name)
+            print("-"*30, text, "*"*80, sep='\n')
+
+######################################################
+######################################################
+# These Functions Create Sets Of Repos That 
+# Match Specific Filters
+######################################################
+######################################################
+
+def build_repo_set_that_starts_with(org, fiter_string):
+    collector = repo_manager.Collector(repo_manager.github, org)
+    collector.run()
+    starts_with_filter = repo_filters.name_startswith_filter(fiter_string)
+    matchers = dict(name_startswith=starts_with_filter)
+    filter_set = repo_manager.FilterSet(**matchers)
+    Repository = repo_manager.Repository
+    return [Repository(**repo) for repo in collector.repositories if filter_set.clean(repo)]
+
+def build_repo_set_from_repos(org, *args):
+    collector = repo_manager.Collector(repo_manager.github, org)
+    collector.run()
+    name_in_filter = repo_filters.name_in(*args)
+    matchers = dict(name_in=name_in_filter)
+    filter_set = repo_manager.FilterSet(**matchers)
+    Repository = repo_manager.Repository
+
+    return [Repository(**repo) for repo in collector.repositories if filter_set.clean(repo)]
+
+def build_repo_map(magic, parents, forks):
+    repo_map = {repo.name: {'parent': repo} for repo in parents}
+    for repo in forks:
+        repo_detail = magic.git_api_get_repository(repo)
+        parent = repo_detail.get('parent')
+        repo_map[parent.get('name')]['fork'] = repo
+        # pprint.pprint(repo_detail)
+    return repo_map
+
+######################################################
+######################################################
+# First Function Clones All Repos On BA
+# Second Function Performs Update On Specific List of Repos
+# Third Function Should Be Reevaluated 
+######################################################
+######################################################
 
 
 # def backup_ba(git, path_to_backup):
@@ -175,17 +218,16 @@ def update_repos(branch_name, title, message, release_type="patch"):
 #     return update_these_repos(*repo_names)
 
 if __name__ == "__main__":
+    ba_repos = build_repo_set_that_starts_with('ByteAcademyCo','exercise-javascript')
+    be_repos = build_repo_set_that_starts_with('ByteExercises','exercise-javascript')
     # main()
-    # update_repos('collapse', 'Creating collapsible sections in README.md.', 'minor')
-    ba_repos = build_repo_set_that_starts_with('ByteAcademyCo','exercise-python')
-    be_repos = build_repo_set_that_starts_with('ByteExercises','exercise-python')
+    # ba_repos = build_repo_set_that_starts_with('ByteAcademyCo','exercise-python')
+    # be_repos = build_repo_set_that_starts_with('ByteExercises','exercise-python')
     # ba_repos = build_repo_set_from_repos('ByteAcademyCo', *['exercise-python-make-a-function','exercise-python-fizzbuzz'])
     # be_repos = build_repo_set_from_repos('ByteExercises', *['exercise-python-make-a-function','exercise-python-fizzbuzz'])
     # be_repos = build_repo_set_that_starts_with('ByteExercises','exercise-javascript')
     print(len(ba_repos))
     print(len(be_repos))
-
-
     # LOCAL EDITS ONLY
     # git = repo_manager.GitLocal()
     # STEP ONE: CLONE
@@ -197,7 +239,7 @@ if __name__ == "__main__":
     
     # GITHUB ACTIONS START HERE
     git_update = repo_manager.githubEXT
-    
+    repo_name_mapping = build_repo_map(git_update, ba_repos, be_repos)
     # # # STEP THREE: MAKE PULL REQUEST
     print("MAKE PULL REQUESTS")
     # # head_branch, head_org, base_branch, base_org, title, message = args
@@ -250,12 +292,14 @@ if __name__ == "__main__":
 
     input("Fork Latest Release To Byte Exercise(Press Enter)")
     input("Head must be a branch.(Set to master)")
-    fork_latest_release_to_be(git_update, be_repos, ba_repos, 'Syncing with upstream...')
-
+    # Use Mapping Here
+    # fork_latest_release_to_be(git_update, be_repos, ba_repos, 'Syncing with upstream...')
+    # **New**
+    fork_exercises_to_be(git_update, repo_name_mapping, "ByteExercises", title="Syncing with upstream...", body='')
 
     input("Merge Pull Request In Byte Exercise(Press Enter)")
 
-
+    # Adjust for new work flow?
     merge_pull_request(git_update, be_repos, 'Syncing with upstream...')
 
 
